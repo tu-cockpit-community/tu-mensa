@@ -1,0 +1,25 @@
+{
+  "id": "tuwien.community.mensa",
+  "name": "TU Mensa Radar",
+  "version": "1.0.0",
+  "description": "Daily cafeteria menus, student meal prices, allergen filters, and opening hours for TU Wien campus mensas.",
+  "category": "Campus Life",
+  "entrypoint": "index.html",
+  "icon": "Utensils",
+  "author": {
+    "name": "TU Cockpit Community Contributors",
+    "github": "tu-cockpit-community",
+    "url": "https://github.com/tu-cockpit-community"
+  },
+  "homepage": "https://github.com/tu-cockpit-community/tu-mensa",
+  "capabilities": {
+    "network": [
+      "https://www.mensen.at/*",
+      "https://menu.mensen.at/*"
+    ],
+    "storage": {
+      "quotaBytes": 10485760
+    },
+    "notifications": false
+  }
+}
