@@ -98,12 +98,45 @@ const LOCATIONS: MensaLocation[] = [
 function checkIsOpen(loc: MensaLocation): boolean {
   const now = new Date();
   const day = now.getDay();
-  // Closed on weekends
-  if (day === 0 || day === 0) return false;
+  // Closed on weekends (0 = Sunday, 6 = Saturday)
+  if (day === 0 || day === 6) return false;
   const curMinutes = now.getHours() * 60 + now.getMinutes();
   const openMinutes = loc.openHour * 60 + loc.openMinute;
   const closeMinutes = loc.closeHour * 60 + loc.closeMinute;
   return curMinutes >= openMinutes && curMinutes < closeMinutes;
+}
+
+function getLocationOperatingNotice(loc: MensaLocation): { isOpen: boolean; notice: string } {
+  const now = new Date();
+  const day = now.getDay();
+  const curMinutes = now.getHours() * 60 + now.getMinutes();
+  const openMinutes = loc.openHour * 60 + loc.openMinute;
+  const closeMinutes = loc.closeHour * 60 + loc.closeMinute;
+  const openingStr = String(loc.openHour).padStart(2, "0") + ":" + String(loc.openMinute).padStart(2, "0");
+  const closingStr = String(loc.closeHour).padStart(2, "0") + ":" + String(loc.closeMinute).padStart(2, "0");
+
+  if (day === 0 || day === 6) {
+    return {
+      isOpen: false,
+      notice: `Wochenende – Geschlossen (Öffnet Montag um ${openingStr} Uhr)`,
+    };
+  }
+  if (curMinutes < openMinutes) {
+    return {
+      isOpen: false,
+      notice: `Geschlossen (Öffnet heute um ${openingStr} Uhr)`,
+    };
+  }
+  if (curMinutes >= closeMinutes) {
+    return {
+      isOpen: false,
+      notice: `Für heute geschlossen (Öffnet morgen um ${openingStr} Uhr)`,
+    };
+  }
+  return {
+    isOpen: true,
+    notice: `Jetzt geöffnet bis ${closingStr} Uhr • ${loc.queueText}`,
+  };
 }
 
 const MENUS_BY_DAY: Record<string, Dish[]> = {
@@ -243,6 +276,11 @@ export const App: React.FC = () => {
   const currentLocation = useMemo(
     () => LOCATIONS.find((l) => l.id === selectedLocation) || LOCATIONS[0],
     [selectedLocation]
+  );
+
+  const currentStatus = useMemo(
+    () => getLocationOperatingNotice(currentLocation),
+    [currentLocation]
   );
 
   const dishes = useMemo(() => {
@@ -570,6 +608,32 @@ export const App: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+
+          {/* Operating Status Banner */}
+          <div
+            style={{
+              padding: "10px 14px",
+              borderRadius: "var(--tu-radius)",
+              backgroundColor: currentStatus.isOpen ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)",
+              border: `1px solid ${currentStatus.isOpen ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+              color: currentStatus.isOpen ? "var(--tu-success)" : "var(--tu-warning)",
+              fontSize: "12px",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "14px",
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Clock style={{ width: "15px", height: "15px" }} />
+              <span>{currentStatus.notice}</span>
+            </div>
+            <span style={{ fontSize: "11px", opacity: 0.85, fontWeight: 500 }}>
+              {currentLocation.name}
+            </span>
           </div>
 
           {/* Dish Grid */}
