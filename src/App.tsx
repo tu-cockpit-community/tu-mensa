@@ -32,39 +32,79 @@ interface MensaLocation {
   shortName: string;
   address: string;
   hours: string;
+  openHour: number;
+  openMinute: number;
+  closeHour: number;
+  closeMinute: number;
   currentQueue: "low" | "medium" | "high";
   queueText: string;
 }
 
 const LOCATIONS: MensaLocation[] = [
   {
-    id: "freihaus",
-    name: "TU Mensa Freihaus",
-    shortName: "Freihaus",
+    id: "markt_freihaus",
+    name: "Mensa Markt Freihaus",
+    shortName: "Markt Freihaus",
     address: "Wiedner Hauptstraße 8-10, Gelber Turm, 1. Stock",
     hours: "11:00 – 14:00 Uhr",
+    openHour: 11,
+    openMinute: 0,
+    closeHour: 14,
+    closeMinute: 0,
     currentQueue: "low",
     queueText: "3–5 min Wartezeit (Gering)",
   },
   {
-    id: "markt",
-    name: "TU Mensa Markt",
-    shortName: "Mensa Markt",
-    address: "Campus Gußhaus, Gußhausstraße 27-29",
-    hours: "11:30 – 14:00 Uhr",
-    currentQueue: "medium",
-    queueText: "8–12 min Wartezeit (Normal)",
+    id: "buffet_freihaus",
+    name: "Mensa Buffet Freihaus",
+    shortName: "Buffet Freihaus",
+    address: "Wiedner Hauptstraße 8-10, Roter Turm, Erdgeschoß",
+    hours: "08:30 – 15:00 Uhr",
+    openHour: 8,
+    openMinute: 30,
+    closeHour: 15,
+    closeMinute: 0,
+    currentQueue: "low",
+    queueText: "Schnellservice & Snacks",
   },
   {
-    id: "gushaus_cafe",
-    name: "Cafeteria Gußhaus",
-    shortName: "Cafeteria",
-    address: "Altes EI-Gebäude, Gußhausstraße 25, EG",
-    hours: "08:30 – 15:30 Uhr",
+    id: "schuette_lihotzky",
+    name: "Café Schütte-Lihotzky",
+    shortName: "Schütte-Lihotzky",
+    address: "Hauptgebäude Karlsplatz 13, Stiege 7, EG",
+    hours: "09:00 – 16:00 Uhr",
+    openHour: 9,
+    openMinute: 0,
+    closeHour: 16,
+    closeMinute: 0,
     currentQueue: "low",
-    queueText: "Direkt verfügbar",
+    queueText: "Kaffee, Mehlspeisen & Bowls",
+  },
+  {
+    id: "gusshaus",
+    name: "Mensa Gußhaus",
+    shortName: "Mensa Gußhaus",
+    address: "Campus Gußhaus, Gußhausstraße 27-29, EG",
+    hours: "11:00 – 14:00 Uhr",
+    openHour: 11,
+    openMinute: 0,
+    closeHour: 14,
+    closeMinute: 0,
+    currentQueue: "medium",
+    queueText: "8–10 min Wartezeit (Normal)",
   },
 ];
+
+function checkIsOpen(loc: MensaLocation): boolean {
+  const now = new Date();
+  const day = now.getDay();
+  // Closed on weekends
+  if (day === 0 || day === 0) return false;
+  const curMinutes = now.getHours() * 60 + now.getMinutes();
+  const openMinutes = loc.openHour * 60 + loc.openMinute;
+  const closeMinutes = loc.closeHour * 60 + loc.closeMinute;
+  return curMinutes >= openMinutes && curMinutes < closeMinutes;
+}
 
 const MENUS_BY_DAY: Record<string, Dish[]> = {
   today: [
@@ -194,7 +234,7 @@ const ALLERGEN_LABELS: Record<string, string> = {
 };
 
 export const App: React.FC = () => {
-  const [selectedLocation, setSelectedLocation] = useState<string>("freihaus");
+  const [selectedLocation, setSelectedLocation] = useState<string>("markt_freihaus");
   const [selectedDay, setSelectedDay] = useState<"today" | "tomorrow" | "friday">("today");
   const [selectedFilter, setSelectedFilter] = useState<"all" | "veggie" | "vegan" | "budget">("all");
   const [favorites, setFavorites] = useState<Set<string>>(new Set(["dish_1"]));
@@ -388,17 +428,31 @@ export const App: React.FC = () => {
                       <Clock style={{ width: "11px", height: "11px" }} />
                       {loc.hours}
                     </span>
-                    <span
-                      style={{
-                        padding: "1px 6px",
-                        borderRadius: "4px",
-                        backgroundColor: loc.currentQueue === "low" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                        color: loc.currentQueue === "low" ? "var(--tu-success)" : "var(--tu-warning)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {loc.queueText.split(" ")[0]}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span
+                        style={{
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          backgroundColor: checkIsOpen(loc) ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                          color: checkIsOpen(loc) ? "var(--tu-success)" : "#ef4444",
+                          fontWeight: 700,
+                          fontSize: "9px",
+                        }}
+                      >
+                        {checkIsOpen(loc) ? "OFFEN" : "ZU"}
+                      </span>
+                      <span
+                        style={{
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          backgroundColor: loc.currentQueue === "low" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                          color: loc.currentQueue === "low" ? "var(--tu-success)" : "var(--tu-warning)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {loc.queueText.split(" ")[0]}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
